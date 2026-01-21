@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>오늘의 별자리 & MBTI 운세</title>
+<style>
+body { font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:linear-gradient(135deg,#1d2671,#c33764); color:white; text-align:center; padding:20px; margin:0; }
+h1 { font-size:28px; margin-bottom:10px; cursor:pointer; }
+#version { position:absolute; top:10px; right:15px; font-size:12px; opacity:0.7; }
+#birthday-container,#mbti-container{margin-top:20px;}
+#birthday-container label,#mbti-container label{margin:0 5px; font-size:14px;}
+select{padding:6px 8px; border-radius:6px; border:none; font-size:14px;}
+button{margin-top:15px; padding:12px 20px; font-size:16px; border-radius:8px; border:none; background:#ffdd57; cursor:pointer;}
+button:hover{background:#fbc02d;}
+.card{background:rgba(255,255,255,0.15); padding:18px; border-radius:12px; margin-top:25px; text-align:left; opacity:0; animation:slideFadeIn 0.8s forwards; cursor:pointer;}
+.card h2{text-align:center;margin-bottom:12px;font-size:20px;}
+.item{margin-bottom:8px;font-size:16px;}
+.luck{margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.3); font-size:15px;}
+@keyframes slideFadeIn{0%{opacity:0;transform:translateY(50px);}100%{opacity:1;transform:translateY(0);}}
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-8px);}40%,80%{transform:translateX(8px);}}
+.shake{animation:shake 0.5s;}
+@media (max-width:480px){h1{font-size:24px;}.card h2{font-size:18px;}.item,.luck{font-size:14px;}select{font-size:13px; padding:5px;}button{font-size:15px;padding:10px 15px;}}
+</style>
+</head>
+<body>
+
+<h1 id="headerTitle" onclick="resetScreen()">🔮 오늘의 별자리 & MBTI 운세</h1>
+<div id="version">도일.ver</div>
+
+<div id="birthday-container">
+<label>연도: <select id="year"></select></label>
+<label>월: <select id="month"></select></label>
+<label>일: <select id="day"></select></label>
+</div>
+
+<div id="mbti-container">
+<label>MBTI (선택):
+<select id="mbti">
+<option value="">선택 안함</option>
+<option value="ISTJ">ISTJ</option><option value="ISFJ">ISFJ</option>
+<option value="INFJ">INFJ</option><option value="INTJ">INTJ</option>
+<option value="ISTP">ISTP</option><option value="ISFP">ISFP</option>
+<option value="INFP">INFP</option><option value="INTP">INTP</option>
+<option value="ESTP">ESTP</option><option value="ESFP">ESFP</option>
+<option value="ENFP">ENFP</option><option value="ENTP">ENTP</option>
+<option value="ESTJ">ESTJ</option><option value="ESFJ">ESFJ</option>
+<option value="ENFJ">ENFJ</option><option value="ENTJ">ENTJ</option>
+</select>
+</label>
+</div>
+
+<button id="showBtn" onclick="showFortune()">운세 보기</button>
+<button id="resetBtn" onclick="resetScreen()" style="display:none;">다시보기</button>
+
+<div id="result"></div>
+
+<script>
+// --- 날짜 선택 옵션 ---
+const yearSelect = document.getElementById("year");
+const monthSelect = document.getElementById("month");
+const daySelect = document.getElementById("day");
+const mbtiSelect = document.getElementById("mbti");
+const currentYear = new Date().getFullYear();
+for(let y=1900;y<=currentYear;y++){let o=document.createElement("option");o.value=y;o.textContent=y;yearSelect.appendChild(o);}
+for(let m=1;m<=12;m++){let o=document.createElement("option");o.value=m;o.textContent=m;monthSelect.appendChild(o);}
+function updateDays(){ const y=parseInt(yearSelect.value,10); const m=parseInt(monthSelect.value,10); const days=new Date(y,m,0).getDate(); daySelect.innerHTML=""; for(let d=1;d<=days;d++){let o=document.createElement("option");o.value=d;o.textContent=d;daySelect.appendChild(o);}}
+yearSelect.value=2000; monthSelect.value=1; daySelect.value=1;
+yearSelect.onchange=monthSelect.onchange=updateDays; updateDays();
+
+// --- 별자리 ---
+function getZodiac(m,d){
+if((m==1&&d>=20)||(m==2&&d<=18))return"물병자리 ♒";
+if((m==2&&d>=19)||(m==3&&d<=20))return"물고기자리 ♓";
+if((m==3&&d>=21)||(m==4&&d<=19))return"양자리 ♈";
+if((m==4&&d>=20)||(m==5&&d<=20))return"황소자리 ♉";
+if((m==5&&d>=21)||(m==6&&d<=21))return"쌍둥이자리 ♊";
+if((m==6&&d>=22)||(m==7&&d<=22))return"게자리 ♋";
+if((m==7&&d>=23)||(m==8&&d<=22))return"사자자리 ♌";
+if((m==8&&d>=23)||(m==9&&d<=22))return"처녀자리 ♍";
+if((m==9&&d>=23)||(m==10&&d<=22))return"천칭자리 ♎";
+if((m==10&&d>=23)||(m==11&&d<=22))return"전갈자리 ♏";
+if((m==11&&d>=23)||(m==12&&d<=21))return"사수자리 ♐";
+return"염소자리 ♑";
+}
+
+// --- 운세 데이터 예시: 최소 30개 ---
+const fortuneData = {
+"물병자리 ♒": {
+total:[
+"새로운 변화를 즐기세요","오늘은 즉흥이 좋아요","호기심이 행운을 부릅니다","작은 성취를 칭찬하세요","창의적 아이디어가 빛나요",
+"사람들과의 교류가 중요합니다","오늘은 적극적인 자세가 필요합니다","자신감을 가져보세요","작은 일에도 감사함을 느끼세요","도전 정신이 빛나는 날",
+"호기심이 삶을 풍부하게 합니다","여유를 즐기세요","계획보다 순간을 즐기세요","사람들에게 친절을 베푸세요","긍정적인 마음이 행운",
+"오늘은 새로운 기술을 배워보세요","관심사를 확장하면 기회가 옵니다","자기 자신에게 상을 주세요","작은 모험이 큰 성취를 만듭니다","주변의 도움을 받아들이세요",
+"건강에 신경쓰는 하루","유연한 사고가 필요합니다","기분 좋은 대화를 나누세요","오늘은 웃음을 잊지 마세요","감정을 솔직히 표현하세요",
+"새로운 친구를 만나보세요","배움에 집중하면 성과가 있습니다","작은 변화가 큰 결과를 만듭니다","열정을 나누세요","도움이 필요한 이에게 손길을 내밀어보세요"
+],
+love:[
+"솔직한 대화가 중요합니다","자유로운 마음이 매력적","작은 관심이 큰 사랑을 만들어요","따뜻한 미소가 행운","데이트에 새로운 아이디어를 시도하세요",
+"사랑하는 사람에게 칭찬을 해보세요","연애는 여유가 필요합니다","감정을 솔직히 표현하세요","서로의 관심사를 공유하세요","작은 이벤트가 큰 기쁨을 줍니다",
+"오늘은 로맨틱한 기회가 옵니다","진심이 통하는 하루","서로 배려하면 관계가 깊어집니다","대화가 사랑을 성장시킵니다","서로의 차이를 인정하세요",
+"연인의 취향을 존중하세요","감정을 표현하는 용기를 가지세요","소소한 애정표현이 중요합니다","데이트에 색다른 계획을 세우세요","오늘은 서로를 격려하세요",
+"서프라이즈가 행운","관계에 유머를 더하세요","오늘은 작은 편지가 행운","서로의 꿈을 응원하세요","사랑은 소통에서 시작됩니다",
+"서로의 장점을 칭찬하세요","감정의 솔직함이 매력입니다","조금의 서프라이즈가 즐거움","연인과 취미를 공유하세요","서로의 시간을 소중히 하세요"
+],
+money:[
+"소비 조절 필요","작은 수익 예상","오늘은 지출을 기록해보세요","재테크 아이디어가 떠오릅니다","오늘은 저축에 집중",
+"작은 투자 성공 가능","지출과 수입을 점검하세요","계획적 소비가 중요","기회를 잘 활용하세요","재정에 여유를 만들어보세요",
+"오늘은 금전적 결정 신중히","작은 절약이 큰 결과를 가져옵니다","수익보다 경험에 투자","금전적 조언을 구하세요","충동 구매를 피하세요",
+"필요 없는 지출 줄이기","오늘은 장기 계획을 세워보세요","투자 아이디어가 번뜩입니다","작은 성과에 만족하세요","금전적 안정이 중요합니다",
+"수익과 지출 균형 유지","재정 점검이 필요","저축 목표를 설정하세요","오늘은 소액 투자 가능","지출 기록을 습관화",
+"재테크 공부 추천","금융 정보에 주목하세요","오늘은 계획적 소비를 실천","작은 수익을 즐기세요","현명한 선택이 행운입니다"
+],
+work:[
+"아이디어 인정받음","협력이 중요","팀 프로젝트에 집중하세요","창의적 접근이 빛나요","오늘은 새로운 도전이 유리",
+"배움에 집중하면 성과","팀워크를 중시하세요","집중력이 성과를 높입니다","새로운 제안을 해보세요","오늘은 학습이 행운을 가져옵니다",
+"동료와 협력하세요","계획적 움직임이 중요","작은 노력도 인정받습니다","리더십을 발휘하세요","팀의 의견을 존중하세요",
+"창의적 아이디어가 성과를 만듭니다","오늘은 집중력이 필요","효율적 방법을 고민하세요","새로운 업무를 시도하세요","지식 공유가 중요합니다",
+"동료에게 도움을 주고 받으세요","기록과 정리가 중요","계획적인 하루","아이디어를 기록하세요","협업이 행운을 부릅니다",
+"작은 프로젝트 성공 가능","성실한 자세가 중요","문제 해결 능력이 빛납니다","오늘은 계획 수립이 유리","팀과의 소통 강화하세요"
+],
+color:["하늘색","청록","민트","연보라","핑크","노랑","주황","빨강","보라","청색","회색","초록","금색","은색","남색","연두","복숭아","살구","자주","연청","베이지","라벤더","청회색","아이보리","코랄","자주빛","밤색","옥색","자주색","와인색"],
+number:["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"]
+}
+};
+
+// --- MBTI 궁합 ---
+const mbtiData = { "ISTJ":"ESTP와 좋은 궁합","ISFJ":"ESFP와 잘 맞음","INFJ":"ENFP와 성장 도우미","INTJ":"ENTP와 지적 케미","ISTP":"ESTJ와 에너지 잘맞음","ISFP":"ESFJ와 편안한 궁합","INFP":"ENFJ와 감정교류 원활","INTP":"ENTJ와 도전적 케미","ESTP":"ISTJ와 활동적 궁합","ESFP":"ISFJ와 즐거운 관계","ENFP":"INFJ와 깊은 유대","ENTP":"INTJ와 아이디어 교환","ESTJ":"ISTP와 실용적 조화","ESFJ":"ISFP와 따뜻한 관계","ENFJ":"INFP와 서로 지지","ENTJ":"INTP와 지적 도전" };
+
+// --- 난수 함수 ---
+function getRandomIndex(arr){ return Math.floor(Math.random()*arr.length); }
+
+// --- 하루 단위 응원 ---
+const dailyQuotes = [
+"오늘도 힘내세요! 🌟","작은 행복을 발견하는 하루 🍀","도전은 곧 기회 🚀","오늘은 웃음이 가득한 하루 💛",
+"긍정적 생각이 행운 ✨","작은 성취가 큰 자신감 🎯","오늘 하루는 나를 위한 시간 ⏰","마음을 열면 새로운 만남 💌",
+"오늘도 최선 💪","행복은 사소한 순간 🌈","희망을 잃지 마세요 🌞","새로운 기회가 찾아옵니다 🌻",
+"오늘은 편안한 마음 유지 💖","작은 배려가 큰 기쁨 💝","오늘은 도전을 즐기세요 🏹","자신을 믿는 하루 💪",
+"행복한 상상을 해보세요 ☁️","오늘은 새로운 친구와 인연 🌷","긍정의 힘을 믿으세요 🌟","작은 일에도 감사하세요 🍀",
+"오늘은 집중력이 빛나는 날 ✨","즐거운 마음으로 시작하세요 😄","오늘도 배우는 하루 📚","기회는 준비된 자에게 옵니다 🚀",
+"사랑을 표현하는 하루 💌","오늘은 건강 챙기기 🏃‍♂️","소중한 사람에게 연락해보세요 💖","오늘의 선택이 미래를 만듭니다 🌈",
+"작은 성취에 만족하세요 🎯","오늘 하루 웃음 가득 😊","자신에게 상을 주세요 🏆","오늘은 평화로운 마음으로 💛"
+];
+
+function setDailyQuote(){ const idx=getRandomIndex(dailyQuotes); document.getElementById("headerTitle").textContent=dailyQuotes[idx]; }
+
+// --- 운세 출력 ---
+function showFortune(){
+  const y=parseInt(yearSelect.value,10), m=parseInt(monthSelect.value,10), d=parseInt(daySelect.value,10);
+  if(isNaN(y)||isNaN(m)||isNaN(d)){ alert("생년월일을 모두 선택!"); return; }
+  const zodiac=getZodiac(m,d), f=fortuneData[zodiac];
+  const tIdx=getRandomIndex(f.total), lIdx=getRandomIndex(f.love), mIdx=getRandomIndex(f.money), wIdx=getRandomIndex(f.work);
+  let mbtiText=""; const mbti=mbtiSelect.value;
+  if(mbti && mbtiData[mbti]) mbtiText=`<div class="item">🧬 MBTI 궁합: ${mbtiData[mbti]}</div>`;
+  document.getElementById("result").innerHTML=`
+  <div class="card" id="fortuneCard">
+    <h2>${zodiac}</h2>
+    <div class="item">✨ 종합운: ${f.total[tIdx]}</div>
+    <div class="item">❤️ 연애운: ${f.love[lIdx]}</div>
+    <div class="item">💰 재물운: ${f.money[mIdx]}</div>
+    <div class="item">📚 학업·일: ${f.work[wIdx]}</div>
+    ${mbtiText}
+    <div class="luck">
+      🎨 오늘의 행운 색: <b>${f.color[getRandomIndex(f.color)]}</b><br>
+      🔢 오늘의 행운 숫자: <b>${f.number[getRandomIndex(f.number)]}</b>
+    </div>
+  </div>`;
+  const card=document.getElementById("fortuneCard");
+  card.onclick=()=>{ card.classList.add("shake"); setTimeout(()=>card.classList.remove("shake"),500); };
+  document.getElementById("showBtn").style.display="none";
+  document.getElementById("resetBtn").style.display="inline-block";
+  yearSelect.disabled=monthSelect.disabled=daySelect.disabled=mbtiSelect.disabled=true;
+}
+
+// --- 초기화 ---
+function resetScreen(){
+  document.getElementById("result").innerHTML="";
+  document.getElementById("showBtn").style.display="inline-block";
+  document.getElementById("resetBtn").style.display="none";
+  yearSelect.disabled=monthSelect.disabled=daySelect.disabled=mbtiSelect.disabled=false;
+  yearSelect.value=2000; monthSelect.value=1; daySelect.value=1; mbtiSelect.value="";
+  updateDays(); setDailyQuote();
+}
+
+// --- 로드 시 실행 ---
+setDailyQuote();
+</script>
+</body>
+</html>
